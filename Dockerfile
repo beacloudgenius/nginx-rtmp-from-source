@@ -14,4 +14,4 @@ RUN apt-get update && \
 
 ADD nginx.conf /usr/local/nginx/conf
 
-CMD ["/usr/local/nginx/sbin/nginx"]
+CMD ["/usr/local/nginx/sbin/nginx", "-g", "daemon off;"]

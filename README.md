@@ -8,6 +8,14 @@ Push:
 
     docker push cloudgenius/nginx-rtmp-from-source:2020
 
+Run:
+
+    docker run -it -p 1935:1935 -p 8080:80 --rm cloudgenius/nginx-rtmp-from-source:2020 bash
+
+    /usr/local/nginx/sbin/nginx -g 'daemon off;'
+
+    docker run -d -p 1935:1935 -p 8080:80 --rm cloudgenius/nginx-rtmp-from-source:2020
+
 config:
 
     cp nginx.conf  /usr/local/nginx/conf
@@ -37,3 +45,15 @@ HLS:
 DASH:
 
     http://localhost:8080/dash/key.mpd
+
+
+players:
+
+    https://github.com/amit08255/shaka-player-react-with-ui-config
+    https://github.com/matvp91/shaka-player-react
+    https://www.npmjs.com/package/shaka-player
+
+    https://shaka-player-demo.appspot.com/docs/api/tutorial-welcome.html
+    https://shaka-player-demo.appspot.com/docs/api/tutorial-basic-usage.html
+    https://medium.com/@stepashka69/making-web-browser-play-streaming-video-mpeg-dash-smooth-streaming-hls-with-one-player-c5f4dd445b91#.nl6cz9yic
+    https://www.wowza.com/testplayers
