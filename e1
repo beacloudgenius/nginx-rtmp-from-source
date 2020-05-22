@@ -1,0 +1,141 @@
+#daemon  off;
+user www-data;
+worker_processes auto;
+pid /tmp/nginx.pid;
+
+error_log  /tmp/logs/error.log;
+error_log  /tmp/logs/error.log  notice;
+error_log  /tmp/logs/error.log  info;
+
+events {
+  worker_connections 1024;
+  # multi_accept on;
+}
+
+rtmp {
+
+  access_log /tmp/logs/rtmp_access.log combined;
+  access_log on;
+
+  server {
+    listen 1935;
+    chunk_size 4096;
+
+    application live {
+      live on;
+      interleave on;
+      wait_key on;
+
+      record all;
+      record_path /tmp/rec;             # This does not need to be publicly accessible since we'll convert and publish the files later
+      record_lock on;
+      record_unique on;
+      record_suffix _%Y-%m-%d_%H-%M-%S.flv;
+
+      # Define the two scripts that will run when recording starts and when it finishes
+      exec_publish sh /tmp/publish.sh;
+      exec_record_done sh /tmp/finished.sh $path $basename.mp4;
+
+      # publish only from localhost
+      #deny publish all;
+      allow publish all;
+      allow play all;
+
+      exec ffmpeg -i rtmp://localhost:1935/live/$name
+              -c:a libfdk_aac -b:a 128k -c:v libx264 -b:v 2500k -f flv -g 30 -r 30 -s 1280x720 -preset superfast -profile:v baseline rtmp://localhost:1935/hls/$name_720p2628kbs
+              -c:a libfdk_aac -b:a 128k -c:v libx264 -b:v 1000k -f flv -g 30 -r 30 -s 854x480 -preset superfast -profile:v baseline rtmp://localhost:1935/hls/$name_480p1128kbs
+              -c:a libfdk_aac -b:a 128k -c:v libx264 -b:v 750k -f flv -g 30 -r 30 -s 640x360 -preset superfast -profile:v baseline rtmp://localhost:1935/hls/$name_360p878kbs
+              -c:a libfdk_aac -b:a 128k -c:v libx264 -b:v 400k -f flv -g 30 -r 30 -s 426x240 -preset superfast -profile:v baseline rtmp://localhost:1935/hls/$name_240p528kbs
+              -c:a libfdk_aac -b:a 64k -c:v libx264 -b:v 200k -f flv -g 15 -r 15 -s 426x240 -preset superfast -profile:v baseline rtmp://localhost:1935/hls/$name_240p264kbs
+              -c copy -f flv rtmp://localhost/hls/$name_src 2>>/tmp/ffmpeg-live-$name.log;
+
+      hls on;
+      hls_path /tmp/hls;
+      hls_fragment 15s;
+      hls_fragment_naming system;
+      hls_nested on;
+
+      hls_variant _720p2628kbs BANDWIDTH=2628000,RESOLUTION=1280x720;
+      hls_variant _480p1128kbs BANDWIDTH=1128000,RESOLUTION=854x480;
+      hls_variant _360p878kbs  BANDWIDTH=878000, RESOLUTION=640x360;
+      hls_variant _240p528kbs  BANDWIDTH=528000, RESOLUTION=426x240;
+      hls_variant _240p264kbs  BANDWIDTH=264000, RESOLUTION=426x240;
+      hls_variant _src         BANDWIDTH=4096000
+
+      dash on;
+      dash_path /tmp/dash;
+      dash_fragment 15s;
+
+      #pull rtmp://tv2.example.com:443/root/new name=tv2 static;
+    }
+  }
+}
+
+http {
+  include mime.types;
+  default_type application/octet-stream;
+
+  sendfile off;
+  tcp_nopush on;
+  #access_log off;
+  gzip on;
+  gzip_vary on;
+  gzip_min_length 1000;
+  gzip_types text/css application/javascript;
+
+  server {
+    listen 80;
+    root /tmp;
+
+    location / {
+      try_files $uri @node;
+      add_header Access-Control-Allow-Origin *;
+      add_header Cache-Control no-cache;
+    }
+    types {
+      application/vnd.apple.mpegurl m3u8;
+      video/mp2t ts;
+      text/html html;
+      application/dash+xml mpd;
+    }
+    location @node {
+      add_header Access-Control-Allow-Origin *;
+      add_header Cache-Control no-cache;
+    }
+    location /hls {
+      types {
+        application/vnd.apple.mpegurl m3u8;
+        video/mp2t ts;
+      }
+      root /tmp;
+      add_header Cache-Control no-cache;
+      add_header Access-Control-Allow-Origin *;
+    }
+    location /stat {
+      rtmp_stat all;
+      rtmp_stat_stylesheet static/stat.xsl;
+    }
+
+    location /static {
+      alias /static;
+    }
+    location /debug {
+      autoindex on;
+    }
+    location /ping {
+      add_header Content-Type text/plain;
+      return 200 "pong";
+    }
+    location /crossdomain.xml {
+      default_type text/xml;
+      return 200 '<?xml version="1.0"?>
+                  <!DOCTYPE cross-domain-policy SYSTEM "http://www.adobe.com/xml/dtds/cross-domain-policy.dtd">
+                  <cross-domain-policy>
+                      <site-control permitted-cross-domain-policies="all"/>
+                      <allow-access-from domain="*" secure="false"/>
+                      <allow-http-request-headers-from domain="*" headers="*" secure="false"/>
+                  </cross-domain-policy>';
+      expires 24h;
+    }
+  }
+}

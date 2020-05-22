@@ -29,23 +29,44 @@ Test:
 
 Ingest:
 
+    ffmpeg -re -i /Volumes/cloudgenius/Recordings/2020\ 01\ Cloud/2020-01-13-0.mp4 -vcodec copy -loop -1 -c:a aac -b:a 160k -ar 44100 -strict -2 -f flv rtmp://localhost:1935/live/key
+
+    ffmpeg -re -i /Volumes/cloudgenius/Recordings/2020\ 01\ Cloud/2020-01-13-0.mp4 -vcodec copy -loop -1 -c:a aac -b:a 160k -ar 44100 -strict -2 -f flv rtmp://hls.cloudgenius.app:1935/live/key
+
     ffmpeg -re \
-        -i /Volumes/cloudgenius/Recordings/2020\ 01\ Cloud/2020-01-13-0.mp4 \
-        -vcodec copy -loop -1 -c:a aac -b:a 160k -ar 44100 -strict -2 \
-        -f flv rtmp://localhost:1935/live/key
+        -i /stream/2016-09-13-Cloud-Tech.mp4 \
+        -c:a copy -c:v copy \
+        -f flv rtmp://stream:1935/live/key
+
+TV Status:
+
+production
+
+    curl -X POST -H "Content-Type: application/json" https://backend.cloudgenius.app/TVstatus -d '{"secret":{"key":"sharedtoken"}, "TV":"started"}'
+
+    curl -X POST -H "Content-Type: application/json" https://backend.cloudgenius.app/TVstatus -d '{"secret":{"key":"sharedtoken"}, "TV":"stopped"}'
+
+localhost
+
+    curl -X POST -H "Content-Type: application/json" http://imac.home.cloudgeni.us:3003/TVstatus -d '{"secret":{"key":"sharedtoken"}, "TV":"started"}'
+
+    curl -X POST -H "Content-Type: application/json" http://imac.home.cloudgeni.us:3003/TVstatus -d '{"secret":{"key":"sharedtoken"}, "TV":"stopped"}'
 
 RTMP:
 
     rtmp://localhost:1935/live/key
+    rtmp://hls.cloudgenius.app:1935/live/key
 
 HLS:
 
     http://localhost:8080/hls/key.m3u8
+    http://localhost:8080/hls/key/index.m3u8
+    https://hls.cloudgenius.app/hls/key.m3u8
 
 DASH:
 
     http://localhost:8080/dash/key.mpd
-
+    https://hls.cloudgenius.app/dash/key.mpd
 
 players:
 
@@ -57,3 +78,12 @@ players:
     https://shaka-player-demo.appspot.com/docs/api/tutorial-basic-usage.html
     https://medium.com/@stepashka69/making-web-browser-play-streaming-video-mpeg-dash-smooth-streaming-hls-with-one-player-c5f4dd445b91#.nl6cz9yic
     https://www.wowza.com/testplayers
+
+offline playback capability:
+
+    https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Using_IndexedDB
+
+DRM:
+
+    https://pallycon.com/docs/en/getting-started/
+    https://pallycon.com/docs/en/multidrm/clients/html5-player/
