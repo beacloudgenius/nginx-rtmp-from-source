@@ -10,11 +10,13 @@ Push:
 
 Run:
 
-    docker run -it -p 1935:1935 -p 8080:80 --rm cloudgenius/nginx-rtmp-from-source:2020 bash
+    docker run -it -p 1935:1935 -v $PWD:/stream -p 8080:80 --rm cloudgenius/nginx-rtmp-from-source:2020 bash
+
+    nginx -c /stream/nginx.conf
 
     /usr/local/nginx/sbin/nginx -g 'daemon off;'
 
-    docker run -d -p 1935:1935 -p 8080:80 --rm cloudgenius/nginx-rtmp-from-source:2020
+    docker run -d -p 1935:1935 -p 8080:80 -v $PWD:/stream --rm cloudgenius/nginx-rtmp-from-source:2020
 
 config:
 
@@ -29,7 +31,7 @@ Test:
 
 Ingest:
 
-    ffmpeg -re -i /Volumes/cloudgenius/Recordings/2020\ 01\ Cloud/2020-01-13-0.mp4 -vcodec copy -loop -1 -c:a aac -b:a 160k -ar 44100 -strict -2 -f flv rtmp://localhost:1935/live/key
+    ffmpeg -re -i /Volumes/cloudgenius/Recordings/2020\ 01\ Cloud/2020-01-13-0.mp4 -vcodec copy -loop -1 -c:a aac -b:a 160k -ar 44100 -strict -2 -f flv rtmp://imac.home.cloudgeni.us:1935/live/key
 
     ffmpeg -re -i /Volumes/cloudgenius/Recordings/2020\ 01\ Cloud/2020-01-13-0.mp4 -vcodec copy -loop -1 -c:a aac -b:a 160k -ar 44100 -strict -2 -f flv rtmp://hls.cloudgenius.app:1935/live/key
 

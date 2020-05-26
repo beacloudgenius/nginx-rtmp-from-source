@@ -15,12 +15,19 @@ RUN apt-get update && \
 RUN apt-get install -y htop tree vim curl
 RUN apt-get install -y ffmpeg
 
-RUN mkdir -p /tmp/logs /tmp/rec
-ADD nginx.conf /usr/local/nginx/conf
-ADD static /tmp/static
-ADD public /tmp/public
+RUN mkdir -p /n/logs /n/rec /stream
 
+# Remember to chown -R www-data:www-data /stream
+# Remember to copt nginx.conf and mime.types to /stream
+
+# ADD nginx.conf /usr/local/nginx/conf
+# ADD nginx.conf /stream
+# ADD mime.types /stream
+
+ADD static /n/static
+ADD public /n/public
+RUN rm -rf /n/nginx /n/nginx-rtmp-module /usr/local/nginx/conf/nginx.conf
+RUN chown -R www-data:www-data /n
 ENV PATH="/usr/local/nginx/sbin/:${PATH}"
-WORKDIR /tmp
 
-CMD ["/usr/local/nginx/sbin/nginx", "-g", "daemon off;"]
+CMD ["/usr/local/nginx/sbin/nginx", "-c", "/stream/nginx.conf", "-g", "daemon off;"]
